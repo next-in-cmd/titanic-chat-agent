@@ -1,25 +1,38 @@
-# Streamlit Cloud Deployment - Core Dependencies
-# Optimized for Streamlit Cloud deployment
+# ========================================
+# TITANIC CHATBOT - PRODUCTION REQUIREMENTS
+# Tested and verified for Streamlit Cloud
+# ========================================
 
-# Frontend
-streamlit>=1.31.0
+# Frontend Framework
+streamlit==1.31.0
 
-# LangChain and Groq LLM - Compatible versions with proper dependency resolution
+# LangChain Framework (STABLE VERSIONS)
 langchain==0.2.11
 langchain-groq==0.1.9
 langchain-core==0.2.26
+langchain-text-splitters==0.2.0
+
+# Groq LLM
 groq==0.10.0
 
-# Data processing
+# Data Processing
 pandas==2.2.0
-numpy==1.26.3
+numpy==1.26.4
 
 # Visualization
 matplotlib==3.8.2
+seaborn==0.13.1
 Pillow==10.2.0
 
 # Utilities
 python-dotenv==1.0.0
+pydantic==2.6.0
+pydantic-core==2.16.1
+
+# Backend (Optional - for FastAPI)
+# Uncomment if running separate backend
+# fastapi==0.109.0
+# uvicorn[standard]==0.27.0
 
 # Optional backend dependencies (for local development)
 # Uncomment if running FastAPI backend separately

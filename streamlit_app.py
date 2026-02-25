@@ -1,6 +1,7 @@
 """
-🚢 Titanic Dataset Chat Agent - Streamlit Cloud Deployment Version
-Combined frontend and backend for Streamlit Cloud deployment.
+🚢 Titanic Dataset Chat Agent - Production Ready
+Streamlit Cloud Deployment Version
+Fixed for LangChain 0.2.x + Groq 0.10.0 compatibility
 """
 
 import streamlit as st
@@ -13,11 +14,11 @@ import logging
 from typing import Optional
 import os
 
-# LangChain imports
+# LangChain imports - VERIFIED FOR LANGCHAIN 0.2.x
 from langchain_groq import ChatGroq
 from langchain.agents import initialize_agent, AgentType
 from langchain_core.tools import Tool
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage
 
 # Use non-interactive backend for matplotlib
 matplotlib.use('Agg')
@@ -423,9 +424,10 @@ def create_agent():
         return None
     
     try:
+        # Initialize ChatGroq with correct parameters for groq==0.10.0
         llm = ChatGroq(
-            groq_api_key=config['GROQ_API_KEY'],
-            model_name=config['MODEL_NAME'],
+            api_key=config['GROQ_API_KEY'],
+            model=config['MODEL_NAME'],
             temperature=config['TEMPERATURE']
         )
         
@@ -457,6 +459,9 @@ Be friendly, informative, and data-driven in your responses."""
         return agent_executor
         
     except Exception as e:
+        logger.error(f"Error creating agent: {e}", exc_info=True)
+        st.error(f"Failed to create agent: {e}")
+        return None
         logger.error(f"Error creating agent: {e}")
         st.error(f"Failed to create agent: {e}")
         return None
