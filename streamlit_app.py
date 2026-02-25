@@ -14,11 +14,11 @@ import logging
 from typing import Optional
 import os
 
-# LangChain imports - VERIFIED FOR LANGCHAIN 0.2.x
+# LangChain imports - VERIFIED FOR LANGCHAIN 0.1.x
 from langchain_groq import ChatGroq
 from langchain.agents import initialize_agent, AgentType
-from langchain_core.tools import Tool
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain.tools import Tool
+from langchain.schema import AIMessage, HumanMessage
 
 # Use non-interactive backend for matplotlib
 matplotlib.use('Agg')
@@ -424,10 +424,10 @@ def create_agent():
         return None
     
     try:
-        # Initialize ChatGroq with correct parameters for groq==0.10.0
+        # Initialize ChatGroq with correct parameters for langchain-groq 0.1.3 + groq 0.4.1
         llm = ChatGroq(
-            api_key=config['GROQ_API_KEY'],
-            model=config['MODEL_NAME'],
+            groq_api_key=config['GROQ_API_KEY'],
+            model_name=config['MODEL_NAME'],
             temperature=config['TEMPERATURE']
         )
         

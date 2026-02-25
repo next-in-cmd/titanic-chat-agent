@@ -4,7 +4,7 @@ from typing import Dict, Optional
 import logging
 import re
 
-from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain.agents import AgentExecutor, initialize_agent, AgentType
 from langchain_groq import ChatGroq
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.memory import ConversationBufferMemory
@@ -32,11 +32,11 @@ class TitanicChatAgent:
         if not self.api_key:
             raise ValueError("Groq API key is required")
         
-        # Initialize LLM
+        # Initialize LLM with correct parameters for langchain-groq 0.1.3
         self.llm = ChatGroq(
-            model=MODEL_NAME,
-            temperature=TEMPERATURE,
-            groq_api_key=self.api_key
+            groq_api_key=self.api_key,
+            model_name=MODEL_NAME,
+            temperature=TEMPERATURE
         )
         
         # Initialize tools
@@ -60,8 +60,7 @@ class TitanicChatAgent:
         Returns:
             Configured AgentExecutor.
         """
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a helpful data analyst assistant specializing in the Titanic dataset. 
+        system_message = """You are a helpful data analyst assistant specializing in the Titanic dataset. 
 Your role is to answer questions about the Titanic passengers using the available tools.
 
 Guidelines:
@@ -83,25 +82,18 @@ Available information:
 IMPORTANT: When users request visualizations (using words like "show", "display", "histogram", "chart", "graph", "plot"), 
 acknowledge this in your response and mention that a chart is being generated.
 
-Always strive to give complete, accurate answers based on the data."""),
-            MessagesPlaceholder(variable_name="chat_history", optional=True),
-            ("human", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ])
+Always strive to give complete, accurate answers based on the data."""
         
-        agent = create_openai_tools_agent(
+        return initialize_agent(
+            tools=self.tools,
             llm=self.llm,
-            tools=self.tools,
-            prompt=prompt
-        )
-        
-        return AgentExecutor(
-            agent=agent,
-            tools=self.tools,
-            memory=self.memory,
+            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True,
             max_iterations=5,
-            handle_parsing_errors=True
+            handle_parsing_errors=True,
+            agent_kwargs={
+                "prefix": system_message
+            }
         )
     
     def _should_generate_chart(self, question: str, answer: str) -> Optional[str]:
