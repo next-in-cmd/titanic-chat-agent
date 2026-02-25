@@ -4,11 +4,11 @@
 # Frontend
 streamlit>=1.31.0
 
-# LangChain and Groq LLM
-langchain>=0.1.0
-langchain-groq>=0.1.0
-langchain-core>=0.1.0
-groq>=0.4.0
+# LangChain and Groq LLM - pinned for compatibility
+langchain==0.1.6
+langchain-groq==0.0.1
+langchain-core==0.1.23
+groq==0.4.2
 
 # Data processing
 pandas==2.2.0

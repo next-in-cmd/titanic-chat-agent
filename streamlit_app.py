@@ -15,10 +15,10 @@ import os
 
 # LangChain imports
 from langchain_groq import ChatGroq
-from langchain.agents import AgentExecutor, create_tool_calling_agent
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents import initialize_agent, AgentType, AgentExecutor
+from langchain.memory import ConversationBufferMemory
 from langchain.tools import Tool
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
 # Use non-interactive backend for matplotlib
 matplotlib.use('Agg')
@@ -430,8 +430,10 @@ def create_agent():
             temperature=config['TEMPERATURE']
         )
         
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a helpful data analyst specializing in the Titanic dataset.
+        tools = create_tools()
+        
+        # Create agent with system message
+        system_message = """You are a helpful data analyst specializing in the Titanic dataset.
 
 IMPORTANT: When users request visualizations (using words like 'show', 'display', 'visualize', 'chart', 'graph', 'plot', 'histogram'), 
 acknowledge this in your response and mention that a chart is being generated.
@@ -439,15 +441,18 @@ acknowledge this in your response and mention that a chart is being generated.
 Provide clear, concise answers based on the data. Use the available tools to gather information.
 When appropriate tools generate charts, they will be displayed automatically.
 
-Be friendly, informative, and data-driven in your responses."""),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ])
+Be friendly, informative, and data-driven in your responses."""
         
-        tools = create_tools()
-        agent = create_tool_calling_agent(llm, tools, prompt)
-        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
+        agent_executor = initialize_agent(
+            tools=tools,
+            llm=llm,
+            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+            verbose=True,
+            handle_parsing_errors=True,
+            agent_kwargs={
+                "prefix": system_message
+            }
+        )
         
         logger.info("LangChain agent created successfully")
         return agent_executor
@@ -578,19 +583,8 @@ if prompt := st.chat_input("Ask about the Titanic dataset...", key="chat_input")
                     # Clear previous chart
                     st.session_state.current_chart = None
                     
-                    # Build chat history
-                    chat_history = []
-                    for msg in st.session_state.messages[:-1]:
-                        if msg["role"] == "user":
-                            chat_history.append(HumanMessage(content=msg["content"]))
-                        else:
-                            chat_history.append(AIMessage(content=msg["content"]))
-                    
-                    # Run agent
-                    response = agent_executor.invoke({
-                        "input": prompt,
-                        "chat_history": chat_history
-                    })
+                    # Run agent with simple input
+                    response = agent_executor.invoke({"input": prompt})
                     
                     answer = response["output"]
                     st.markdown(answer)
