@@ -479,6 +479,9 @@ if 'messages' not in st.session_state:
 if 'current_chart' not in st.session_state:
     st.session_state.current_chart = None
 
+if 'pending_question' not in st.session_state:
+    st.session_state.pending_question = None
+
 # ============================================================================
 # USER INTERFACE
 # ============================================================================
@@ -538,8 +541,8 @@ with st.sidebar:
         
         for example in examples:
             if st.button(example, key=f"example_{example}", use_container_width=True):
-                # Add to chat
-                st.session_state.messages.append({"role": "user", "content": example})
+                # Set pending question to be processed after rerun
+                st.session_state.pending_question = example
                 st.rerun()
         
         st.divider()
@@ -565,6 +568,55 @@ with chat_container:
             st.markdown(message["content"])
             if "chart" in message and message["chart"] is not None:
                 st.pyplot(message["chart"])
+
+# Process pending question from example buttons
+if st.session_state.pending_question is not None:
+    prompt = st.session_state.pending_question
+    st.session_state.pending_question = None  # Clear it immediately
+    
+    if df is None:
+        st.error("Cannot process query: Dataset not loaded")
+    elif agent_executor is None:
+        st.error("Cannot process query: Agent not initialized")
+    else:
+        # Add user message
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Generate response
+        with st.spinner("🤔 Analyzing data..."):
+            try:
+                # Clear previous chart
+                st.session_state.current_chart = None
+                
+                # Run agent with simple input
+                response = agent_executor.invoke({"input": prompt})
+                
+                answer = response["output"]
+                
+                # Display chart if generated
+                chart_fig = None
+                if st.session_state.current_chart is not None:
+                    chart_fig = st.session_state.current_chart
+                
+                # Save to history
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": answer,
+                    "chart": chart_fig
+                })
+                
+                # Rerun to display the new messages
+                st.rerun()
+                
+            except Exception as e:
+                error_msg = f"I apologize, but I encountered an error: {str(e)}. Please try rephrasing your question."
+                logger.error(f"Error processing query: {e}", exc_info=True)
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": error_msg,
+                    "chart": None
+                })
+                st.rerun()
 
 # Chat input
 if prompt := st.chat_input("Ask about the Titanic dataset...", key="chat_input"):
