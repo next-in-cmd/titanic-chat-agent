@@ -1,8 +1,5 @@
-# ========================================
-# TITANIC CHATBOT - PRODUCTION REQUIREMENTS  
-# Tested and verified - STABLE VERSIONS
-# Fixed: Pydantic v1 required for langchain-groq 0.1.3
-# ========================================
+
+
 
 # Frontend Framework
 streamlit==1.31.0
